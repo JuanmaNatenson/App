@@ -20,23 +20,46 @@ jwtClient.authorize(function (err, tokens) {
  }
 });
 
-//Google Drive API
-drive.files.list({
-   auth: jwtClient,
-}, function (err, response) {
-   if (err) {
-       console.log('The API returned an error: ' + err);
-       return;
-   }
-   var files = response.files;
-   console.log(response.data.files);
-	if (files.length == 0) {
-       console.log('No files found.');
-    } else if (files.length > 0) {
-       console.log('Files from Google Drive:');
-       for (var i = 0; i < files.length; i++) {
-           var file = files[i];
-           console.log('%s (%s)', file.name, file.id);
-       }
-   }
-});
+function lukeFileWalker (folder, drive) 
+{
+	var fol = "'"+folder;
+	var der = fol+"'";
+	drive.files.list({
+    auth: jwtClient,
+    fields : '*',
+    q:der+" in parents"
+    }, function (err, response) 
+	{
+	    if (err) 
+	    {
+	        console.log('The API returned an error: ' + err);
+	        return;
+	    }
+	   
+	    var files = response.data.files;
+		if (files.length == 0) 
+		{
+	        console.log('No files found.');
+	    } 
+	    
+	    else if (files.length > 0) 
+	    {
+    	    for (var i = 0; i < files.length; i++) 
+	   		{
+		    	var file = files[i];
+			    console.log('%s (%s) [%s]', file.name, file.id, file.parents);
+		        if (file.mimeType == 'application/vnd.google-apps.folder')
+		        {
+		   			lukeFileWalker (file.id, drive);
+		        }
+
+	   		}
+		}
+
+	}
+);
+}
+
+
+
+lukeFileWalker("1obB8eTPSye5trVyH5GU6HNWSYU13YRcI", drive)
